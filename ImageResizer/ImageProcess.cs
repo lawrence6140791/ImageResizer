@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,7 +15,7 @@ namespace ImageResizer
         /// 清空目的目錄下的所有檔案與目錄
         /// </summary>
         /// <param name="destPath">目錄路徑</param>
-        public void Clean(string destPath)
+        public async Task CleanAsync(string destPath)
         {
             if (!Directory.Exists(destPath))
             {
@@ -25,21 +25,33 @@ namespace ImageResizer
             {
                 var allImageFiles = Directory.GetFiles(destPath, "*", SearchOption.AllDirectories);
 
-                int _delCnt = 0;
+                List<Task> tasks = new List<Task>();
 
+                int _delCnt = 0;
                 foreach (var item in allImageFiles)
                 {
-                    _delCnt++;
-                    var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
-
-                    //向左補零
-                    var _delId = String.Format("{0:D2}", _delCnt);
-
-                    Console.WriteLine($"刪除第{_delId}張圖片，檔名({Path.GetFileName(item)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
-                    File.Delete(item);
-
                     
+                    var task = Task.Run(async () =>
+                    {
+                        var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+                        //向左補零
+                        
+                        await Task.Run(() =>
+                        {
+                            File.Delete(item);
+                        });
+                        _delCnt++;
+                        var _delId = String.Format("{0:D2}", _delCnt);
+
+                        Console.WriteLine($"刪除第{_delId}張圖片，檔名({Path.GetFileName(item)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+
+
+                    });
+                    //await Task.Delay(5000);
+                    tasks.Add(task);
                 }
+
+                await Task.WhenAll(tasks);
             }
         }
 
@@ -49,9 +61,11 @@ namespace ImageResizer
         /// <param name="sourcePath">圖片來源目錄路徑</param>
         /// <param name="destPath">產生圖片目的目錄路徑</param>
         /// <param name="scale">縮放比例</param>
-        public void ResizeImages(string sourcePath, string destPath, double scale)
+        public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             var allFiles = FindImages(sourcePath);
+
+            List<Task> tasks = new List<Task>();
 
             int _processCnt = 0;
             foreach (var filePath in allFiles)
@@ -59,8 +73,6 @@ namespace ImageResizer
                 _processCnt++;
                 //向左補零
                 var _processId = String.Format("{0:D2}", _processCnt);
-                
-
                 Image imgPhoto = Image.FromFile(filePath);
                 string imgName = Path.GetFileNameWithoutExtension(filePath);
 
@@ -70,16 +82,25 @@ namespace ImageResizer
                 int destionatonWidth = (int)(sourceWidth * scale);
                 int destionatonHeight = (int)(sourceHeight * scale);
 
-                Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
-                    sourceWidth, sourceHeight,
-                    destionatonWidth, destionatonHeight);
+                var task = Task.Run(async () =>
+                {
+                    var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+                    Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+                    await Task.Run(() =>
+                    {
+                        Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
+                        sourceWidth, sourceHeight,
+                        destionatonWidth, destionatonHeight);
 
-                string destFile = Path.Combine(destPath, imgName + ".jpg");
-                processedImage.Save(destFile, ImageFormat.Jpeg);
+                        string destFile = Path.Combine(destPath, imgName + ".jpg");
+                        processedImage.Save(destFile, ImageFormat.Jpeg);
+                    });
+                });
 
-                var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
-                Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+                tasks.Add(task);
             }
+
+            await Task.WhenAll(tasks);
         }
 
         /// <summary>
