@@ -16,7 +16,7 @@ namespace ImageResizer
 
             ImageProcess imageProcess = new ImageProcess();
 
-            await imageProcess.CleanAsync(destinationPath);
+            imageProcess.Clean(destinationPath);
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
