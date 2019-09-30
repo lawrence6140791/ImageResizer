@@ -25,17 +25,17 @@ namespace ImageResizer
             {
                 var allImageFiles = Directory.GetFiles(destPath, "*", SearchOption.AllDirectories);
 
-                int _delCnt = 0;
+                //int _delCnt = 0;
 
                 foreach (var item in allImageFiles)
                 {
-                    _delCnt++;
-                    var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+                    //_delCnt++;
+                    //var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
 
                     //向左補零
-                    var _delId = String.Format("{0:D2}", _delCnt);
+                    //var _delId = String.Format("{0:D2}", _delCnt);
 
-                    Console.WriteLine($"刪除第{_delId}張圖片，檔名({Path.GetFileName(item)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+                    //Console.WriteLine($"刪除第{_delId}張圖片，檔名({Path.GetFileName(item)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
                     File.Delete(item);
 
 
@@ -54,12 +54,12 @@ namespace ImageResizer
 
             List<Task> tasks = new List<Task>();
 
-            int _processCnt = 0;
+            //int _processCnt = 0;
             foreach (var filePath in allFiles)
             {
-                _processCnt++;
+                //_processCnt++;
                 //向左補零
-                var _processId = String.Format("{0:D2}", _processCnt);
+                //var _processId = String.Format("{0:D2}", _processCnt);
                 Image imgPhoto = Image.FromFile(filePath);
                 string imgName = Path.GetFileNameWithoutExtension(filePath);
 
@@ -71,8 +71,8 @@ namespace ImageResizer
 
                 var task = Task.Run(() =>
                 {
-                    var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
-                    Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+                    //var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+                    //Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
                     Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
                         sourceWidth, sourceHeight,
                         destionatonWidth, destionatonHeight);
