@@ -121,8 +121,10 @@ namespace ImageResizer
 
                 var task = Task.Run(() =>
                 {
-                    
                     var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+
+                    
+
                     Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
                     Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
                         sourceWidth, sourceHeight,
@@ -130,6 +132,11 @@ namespace ImageResizer
 
                     string destFile = Path.Combine(destPath, imgName + ".jpg");
                     processedImage.Save(destFile, ImageFormat.Jpeg);
+
+                    if (token.IsCancellationRequested == true)
+                    {
+                        Console.WriteLine($"執行緒 (TID: {tid})被取消 >>>> {DateTime.Now}");
+                    }
                 }, token);
 
                 tasks.Add(task);
