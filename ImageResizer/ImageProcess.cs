@@ -50,6 +50,7 @@ namespace ImageResizer
         /// <param name="scale">縮放比例</param>
         public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
+
             var allFiles = FindImages(sourcePath);
 
             List<Task> tasks = new List<Task>();
@@ -85,6 +86,59 @@ namespace ImageResizer
             }
 
             await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// 進行圖片的縮放作業
+        /// </summary>
+        /// <param name="sourcePath">圖片來源目錄路徑</param>
+        /// <param name="destPath">產生圖片目的目錄路徑</param>
+        /// <param name="scale">縮放比例</param>
+        /// <param name="token">取消物件</param>
+        public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale, CancellationToken token)
+        {
+
+            var allFiles = FindImages(sourcePath);
+
+            List<Task> tasks = new List<Task>();
+
+            int _processCnt = 0;
+            foreach (var filePath in allFiles)
+            {
+                //if (token.IsCancellationRequested == true)
+                //    break;
+                _processCnt++;
+                //向左補零
+                var _processId = String.Format("{0:D2}", _processCnt);
+                Image imgPhoto = Image.FromFile(filePath);
+                string imgName = Path.GetFileNameWithoutExtension(filePath);
+
+                int sourceWidth = imgPhoto.Width;
+                int sourceHeight = imgPhoto.Height;
+
+                int destionatonWidth = (int)(sourceWidth * scale);
+                int destionatonHeight = (int)(sourceHeight * scale);
+
+                var task = Task.Run(() =>
+                {
+                    
+                    var tid = String.Format("{0:D2}", Thread.CurrentThread.ManagedThreadId);
+                    Console.WriteLine($"縮放第{_processId}張圖片，檔名({Path.GetFileName(filePath)}) 執行緒 (TID: {tid}) >>>> {DateTime.Now}");
+                    Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
+                        sourceWidth, sourceHeight,
+                        destionatonWidth, destionatonHeight);
+
+                    string destFile = Path.Combine(destPath, imgName + ".jpg");
+                    processedImage.Save(destFile, ImageFormat.Jpeg);
+                }, token);
+
+                tasks.Add(task);
+            }
+
+            //token.ThrowIfCancellationRequested();
+            await Task.WhenAll(tasks);
+
+       
         }
 
         /// <summary>
